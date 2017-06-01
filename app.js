@@ -2,6 +2,9 @@ const express = require('express');
 const path = require('path');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
+const expressValidator = require('express-validator');
+const flash = require('connect-flash');
+const session = require('express-session');
 
 mongoose.connect('mongodb://localhost/nodeScratchExpress');
 let db = mongoose.connection;
@@ -31,11 +34,45 @@ app.use(bodyParser.json());
 // Set Public Folder
 app.use(express.static(path.join(__dirname, 'public')));
 
+//Express Session Middleware
+app.use(session({
+	secret: 'keyboard cat',
+	resalve: false,
+	saveUninitialized: true,
+	cookie: {secure: true}
+}))
+
+//Express Messages Middleware
+app.use(require('connect-flash')());
+app.use((req, res, next)=>{
+	res.locals.messages = require('express-messages')(req, res);
+	next();
+});
+
+// Express Validator Middleware
+app.use(expressValidator({
+	errorFormatter: 	(param, messages, value)=>{
+		var namespace = param.split('.')
+		, root = namespace.shift()
+		, formParam = root;
+
+		while(namespace.length)
+			formParam += '[' + namespace.shift() + ']'; 
+		return {
+			param: formParam,
+			msg: msg,
+			value: value
+		}; 
+
+	}	
+}));
+
 app.get('/', (reg, res)=>{
 	Article.find({}, (err, articles)=>{
 		if (err){
 			console.log(err);
-		} else {res.render('index', { title: 'Articles', articles: articles });
+		} else {
+			res.render('index', { title: 'Articles', articles: articles });
 		}
 	})
 });
@@ -66,8 +103,10 @@ app.post('/article/add',(req,res)=>{
 	article.save((err)=>{
 		if(err){
 			console.log(err);
+			req.flash('danger','Article Added');
 			return;
 		} else {
+			req.flash('success','Article Added');
 			res.redirect('/');
 		}
 	});
