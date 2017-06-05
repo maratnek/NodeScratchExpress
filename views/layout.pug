@@ -18,13 +18,18 @@ html
 					ul.nav.navbar-nav
 						li.active
 							a(href='/') Home
-						li
-							a(href='/articles/add') Article
-					ul.nav.navbar-nav.navbar-rigth
-						li
-							a(href='/users/register') Register
-						li
-							a(href='/users/login') Login 
+						if user
+							li
+								a(href='/articles/add') Article
+					ul.nav.navbar-nav.navbar-right
+						if user
+							li 
+								a(href='/users/logout') Logout
+						else
+							li
+								a(href='/users/register') Register
+							li
+								a(href='/users/login') Login 
 
 		// /.nav-collapse
 
